@@ -192,35 +192,37 @@ const LoveBot = () => {
         setUsedQuestions([]);
         const selected = partnerQuestions[0];
         setCurrentCategory(selected.category);
-        setCurrentQuestion(selected.question);
-        setUsedQuestions([selected.question]);
-        return selected.question;
+        const formattedQuestion = formatQuestion(selected.question, true); // Partner challenge
+        setCurrentQuestion(formattedQuestion);
+        setUsedQuestions([formattedQuestion]);
+        return formattedQuestion;
       }
       
       const randomIndex = Math.floor(Math.random() * availablePartnerQuestions.length);
       const selected = availablePartnerQuestions[randomIndex];
       
       setCurrentCategory(selected.category);
-      setCurrentQuestion(selected.question);
-      setUsedQuestions(prev => [...prev, selected.question]);
+      const formattedQuestion = formatQuestion(selected.question, true); // Partner challenge
+      setCurrentQuestion(formattedQuestion);
+      setUsedQuestions(prev => [...prev, formattedQuestion]);
       
-      return selected.question;
+      return formattedQuestion;
     }
 
     const allQuestions = [];
     Object.keys(questionCategories).forEach(categoryKey => {
-      questionCategories[categoryKey].questions.forEach(question => {
+      questionCategories[categoryKey].questions.forEach(questionBase => {
         allQuestions.push({
-          question,
+          question: questionBase,
           category: categoryKey,
           type: 'preset'
         });
       });
     });
     
-    customQuestions.forEach(question => {
+    customQuestions.forEach(questionBase => {
       allQuestions.push({
-        question,
+        question: questionBase,
         category: 'custom',
         type: 'custom'
       });
@@ -233,19 +235,21 @@ const LoveBot = () => {
       const randomIndex = Math.floor(Math.random() * allQuestions.length);
       const selected = allQuestions[randomIndex];
       setCurrentCategory(selected.category);
-      setCurrentQuestion(selected.question);
-      setUsedQuestions([selected.question]);
-      return selected.question;
+      const formattedQuestion = formatQuestion(selected.question, false); // Original game
+      setCurrentQuestion(formattedQuestion);
+      setUsedQuestions([formattedQuestion]);
+      return formattedQuestion;
     }
     
     const randomIndex = Math.floor(Math.random() * availableQuestions.length);
     const selected = availableQuestions[randomIndex];
     
     setCurrentCategory(selected.category);
-    setCurrentQuestion(selected.question);
-    setUsedQuestions(prev => [...prev, selected.question]);
+    const formattedQuestion = formatQuestion(selected.question, false); // Original game
+    setCurrentQuestion(formattedQuestion);
+    setUsedQuestions(prev => [...prev, formattedQuestion]);
     
-    return selected.question;
+    return formattedQuestion;
   };
 
   const callGeminiAPI = async (userAnswer, question) => {
@@ -356,8 +360,69 @@ Give a short, playful, supportive response:`
     }
   };
 
-  const personalizeQuestion = (question) => {
-    return question;
+  const formatQuestion = (questionBase, isPartnerChallenge = false) => {
+    // For partner challenges, format as "What's your..."
+    // For original game, format as "What's your partner's..."
+    
+    if (isPartnerChallenge) {
+      // Partner answering about themselves
+      if (questionBase.includes("something small their partner does that makes them happy")) {
+        return "What's something small your partner does that makes you happy?";
+      } else if (questionBase.includes("favorite thing about their relationship")) {
+        return "What's your favorite thing about your relationship?";
+      } else if (questionBase.includes("one thing they always say about their partner to others")) {
+        return "What's one thing you always say about your partner to others?";
+      } else if (questionBase.includes("relationship goal they have")) {
+        return "What's a relationship goal you have?";
+      } else if (questionBase.includes("morning routine")) {
+        return "What's your morning routine like?";
+      } else if (questionBase.includes("side of the bed")) {
+        return "What side of the bed do you sleep on?";
+      } else if (questionBase.includes("how they like their coffee")) {
+        return "How do you like your coffee or tea?";
+      } else if (questionBase.includes("time they naturally wake up")) {
+        return "What time do you naturally wake up?";
+      } else if (questionBase.includes("ideal temperature")) {
+        return "What's your ideal temperature for the house?";
+      } else if (questionBase.includes("type of music they listen to")) {
+        return "What type of music do you listen to when you're happy?";
+      } else if (questionBase.includes("hobby they would love")) {
+        return "What's a hobby you would love to try?";
+      } else if (questionBase.startsWith("how")) {
+        return `${questionBase.charAt(0).toUpperCase() + questionBase.slice(1)}?`;
+      } else {
+        return `What's your ${questionBase}?`;
+      }
+    } else {
+      // Original player guessing about partner
+      if (questionBase.includes("something small their partner does that makes them happy")) {
+        return "What's something small you do that makes your partner happy?";
+      } else if (questionBase.includes("favorite thing about their relationship")) {
+        return "What's your partner's favorite thing about your relationship?";
+      } else if (questionBase.includes("one thing they always say about their partner to others")) {
+        return "What's one thing your partner always says about you to others?";
+      } else if (questionBase.includes("relationship goal they have")) {
+        return "What's a relationship goal your partner has?";
+      } else if (questionBase.includes("morning routine")) {
+        return "What's your partner's morning routine like?";
+      } else if (questionBase.includes("side of the bed")) {
+        return "What side of the bed does your partner sleep on?";
+      } else if (questionBase.includes("how they like their coffee")) {
+        return "How does your partner like their coffee or tea?";
+      } else if (questionBase.includes("time they naturally wake up")) {
+        return "What time does your partner naturally wake up?";
+      } else if (questionBase.includes("ideal temperature")) {
+        return "What's your partner's ideal temperature for the house?";
+      } else if (questionBase.includes("type of music they listen to")) {
+        return "What type of music does your partner listen to when happy?";
+      } else if (questionBase.includes("hobby they would love")) {
+        return "What's a hobby your partner would love to try?";
+      } else if (questionBase.startsWith("how")) {
+        return `How does your partner ${questionBase.substring(8)}?`;
+      } else {
+        return `What's your partner's ${questionBase}?`;
+      }
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -410,20 +475,28 @@ Please add REACT_APP_GEMINI_API_KEY to your .env file to enable AI features.`);
 
       console.log('Comparisons prepared:', comparisons);
 
-      const prompt = `You are LoveBot, analyzing how well a couple knows each other. Compare these relationship quiz answers briefly.
+      const prompt = `You are LoveBot, analyzing how well a couple knows each other. Compare these relationship quiz answers and rate similarity accurately.
+
+For each question, Partner 1 was guessing about Partner 2, and Partner 2 answered about themselves.
 
 ${comparisons.map((comp, index) => `
 Q${index + 1}: ${comp.question}
-Partner 1: "${comp.partner1Answer}"
-Partner 2: "${comp.partner2Answer}"
+Partner 1's guess: "${comp.partner1Answer}"
+Partner 2's actual answer: "${comp.partner2Answer}"
 `).join('\n')}
 
-Give a short, fun analysis with:
-- Compatibility score (X/10)
-- 2-3 observations about their answers
-- 1 cute suggestion
+Analyze each answer pair for similarity:
+- Exact/very similar answers = 90-100% match
+- Related concepts = 60-89% match  
+- Different but reasonable = 30-59% match
+- Completely different/unclear = 0-29% match
 
-Keep it under 100 words, casual and encouraging! Use emojis but don't be overly formal.`;
+Give a compatibility score out of 10 based on actual answer similarity (not just being positive). Include:
+- Overall compatibility score (be honest!)
+- 2-3 specific observations about how well Partner 1 knows Partner 2
+- 1 suggestion for improving their connection
+
+Keep it under 100 words, fun but accurate!`;
 
       console.log('Sending prompt to Gemini API:', prompt);
 
