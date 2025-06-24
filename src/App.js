@@ -35,16 +35,16 @@ const LoveBot = () => {
       name: "Getting to Know Each Other",
       color: "from-purple-400 to-pink-400",
       questions: [
-        "What's your biggest dream or life goal?",
-        "What makes you laugh the hardest?",
-        "What's your biggest pet peeve?",
-        "What's your favorite childhood memory?",
-        "What's something you're secretly proud of?",
-        "What's your go-to comfort food?",
-        "What's your favorite way to spend a weekend?",
-        "What song always gets you dancing?",
-        "What's your biggest fear?",
-        "What superpower would you want to have?"
+        "biggest dream or life goal",
+        "what makes them laugh the hardest",
+        "biggest pet peeve",
+        "favorite childhood memory",
+        "something they're secretly proud of",
+        "go-to comfort food",
+        "favorite way to spend a weekend",
+        "song that always gets them dancing",
+        "biggest fear",
+        "superpower they would want to have"
       ]
     },
     relationship_dynamics: {
@@ -52,16 +52,16 @@ const LoveBot = () => {
       name: "Your Relationship Together",
       color: "from-red-400 to-pink-400",
       questions: [
-        "What's your love language?",
-        "How do you prefer to resolve arguments?",
-        "What's your favorite memory of you two together?",
-        "What's something small your partner does that makes you happy?",
-        "How do you show when you're stressed?",
-        "What's your idea of the perfect date night?",
-        "What's one thing you always say about your partner to others?",
-        "How do you like to celebrate achievements?",
-        "What's your favorite thing about your relationship?",
-        "What's a relationship goal you have?"
+        "love language",
+        "how they prefer to resolve arguments",
+        "favorite memory of you two together",
+        "something small their partner does that makes them happy",
+        "how they show when they're stressed",
+        "idea of the perfect date night",
+        "one thing they always say about their partner to others",
+        "how they like to celebrate achievements",
+        "favorite thing about their relationship",
+        "relationship goal they have"
       ]
     },
     daily_life: {
@@ -69,16 +69,16 @@ const LoveBot = () => {
       name: "Daily Life & Habits",
       color: "from-blue-400 to-teal-400",
       questions: [
-        "What's your morning routine like?",
-        "What side of the bed do you sleep on?",
-        "What's your favorite room in your home?",
-        "What's your biggest guilty pleasure?",
-        "How do you like your coffee or tea?",
-        "What's your go-to outfit for feeling confident?",
-        "What time do you naturally wake up?",
-        "What's your favorite app on your phone?",
-        "What's your shopping weakness?",
-        "What's your ideal temperature for the house?"
+        "morning routine",
+        "side of the bed they sleep on",
+        "favorite room in their home",
+        "biggest guilty pleasure",
+        "how they like their coffee or tea",
+        "go-to outfit for feeling confident",
+        "time they naturally wake up",
+        "favorite app on their phone",
+        "shopping weakness",
+        "ideal temperature for the house"
       ]
     },
     fun_preferences: {
@@ -86,16 +86,16 @@ const LoveBot = () => {
       name: "Favorites & Preferences",
       color: "from-green-400 to-blue-400",
       questions: [
-        "What's your favorite movie or TV show right now?",
-        "What's your dream vacation destination?",
-        "What's your favorite season?",
-        "What type of music do you listen to when you're happy?",
-        "What's your favorite type of exercise or activity?",
-        "What's your go-to takeout order?",
-        "What's your favorite holiday?",
-        "What's a hobby you would love to try?",
-        "What's your favorite way to unwind after a hard day?",
-        "What's your dream car?"
+        "favorite movie or TV show right now",
+        "dream vacation destination",
+        "favorite season",
+        "type of music they listen to when happy",
+        "favorite type of exercise or activity",
+        "go-to takeout order",
+        "favorite holiday",
+        "hobby they would love to try",
+        "favorite way to unwind after a hard day",
+        "dream car"
       ]
     }
   };
