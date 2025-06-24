@@ -35,16 +35,16 @@ const LoveBot = () => {
       name: "Getting to Know Each Other",
       color: "from-purple-400 to-pink-400",
       questions: [
-        "What's your partner's biggest dream or life goal?",
-        "What makes your partner laugh the hardest?",
-        "What's your partner's biggest pet peeve?",
-        "What's your partner's favorite childhood memory?",
-        "What's something your partner is secretly proud of?",
-        "What's your partner's go-to comfort food?",
-        "What's your partner's favorite way to spend a weekend?",
-        "What song always gets your partner dancing?",
-        "What's your partner's biggest fear (silly or serious)?",
-        "What superpower would your partner want to have?"
+        "What's your biggest dream or life goal?",
+        "What makes you laugh the hardest?",
+        "What's your biggest pet peeve?",
+        "What's your favorite childhood memory?",
+        "What's something you're secretly proud of?",
+        "What's your go-to comfort food?",
+        "What's your favorite way to spend a weekend?",
+        "What song always gets you dancing?",
+        "What's your biggest fear?",
+        "What superpower would you want to have?"
       ]
     },
     relationship_dynamics: {
@@ -52,16 +52,16 @@ const LoveBot = () => {
       name: "Your Relationship Together",
       color: "from-red-400 to-pink-400",
       questions: [
-        "What's your partner's love language?",
-        "How does your partner prefer to resolve arguments?",
-        "What's your partner's favorite memory of you two together?",
-        "What's something small you do that makes your partner happy?",
-        "How does your partner show they're stressed?",
-        "What's your partner's idea of the perfect date night?",
-        "What's one thing your partner always says about you to others?",
-        "How does your partner like to celebrate achievements?",
-        "What's your partner's favorite thing about your relationship?",
-        "What's a relationship goal your partner has mentioned?"
+        "What's your love language?",
+        "How do you prefer to resolve arguments?",
+        "What's your favorite memory of you two together?",
+        "What's something small your partner does that makes you happy?",
+        "How do you show when you're stressed?",
+        "What's your idea of the perfect date night?",
+        "What's one thing you always say about your partner to others?",
+        "How do you like to celebrate achievements?",
+        "What's your favorite thing about your relationship?",
+        "What's a relationship goal you have?"
       ]
     },
     daily_life: {
@@ -69,16 +69,16 @@ const LoveBot = () => {
       name: "Daily Life & Habits",
       color: "from-blue-400 to-teal-400",
       questions: [
-        "What's your partner's morning routine like?",
-        "What side of the bed does your partner sleep on?",
-        "What's your partner's favorite room in your home and why?",
-        "What's your partner's biggest guilty pleasure?",
-        "How does your partner like their coffee/tea?",
-        "What's your partner's go-to outfit for feeling confident?",
-        "What time does your partner naturally wake up?",
-        "What's your partner's favorite app on their phone?",
-        "What's your partner's shopping weakness?",
-        "What's your partner's ideal temperature for the house?"
+        "What's your morning routine like?",
+        "What side of the bed do you sleep on?",
+        "What's your favorite room in your home?",
+        "What's your biggest guilty pleasure?",
+        "How do you like your coffee or tea?",
+        "What's your go-to outfit for feeling confident?",
+        "What time do you naturally wake up?",
+        "What's your favorite app on your phone?",
+        "What's your shopping weakness?",
+        "What's your ideal temperature for the house?"
       ]
     },
     fun_preferences: {
@@ -86,16 +86,16 @@ const LoveBot = () => {
       name: "Favorites & Preferences",
       color: "from-green-400 to-blue-400",
       questions: [
-        "What's your partner's favorite movie or TV show right now?",
-        "What's your partner's dream vacation destination?",
-        "What's your partner's favorite season and why?",
-        "What type of music does your partner listen to when happy vs. sad?",
-        "What's your partner's favorite type of exercise or activity?",
-        "What's your partner's go-to takeout order?",
-        "What's your partner's favorite holiday and how they like to celebrate?",
-        "What's a hobby your partner would love to try?",
-        "What's your partner's favorite way to unwind after a hard day?",
-        "What's your partner's dream car (realistic or fantasy)?"
+        "What's your favorite movie or TV show right now?",
+        "What's your dream vacation destination?",
+        "What's your favorite season?",
+        "What type of music do you listen to when you're happy?",
+        "What's your favorite type of exercise or activity?",
+        "What's your go-to takeout order?",
+        "What's your favorite holiday?",
+        "What's a hobby you would love to try?",
+        "What's your favorite way to unwind after a hard day?",
+        "What's your dream car?"
       ]
     }
   };
