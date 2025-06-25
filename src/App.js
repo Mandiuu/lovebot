@@ -20,6 +20,7 @@ const LoveBot = () => {
   // Settings - simplified since API key comes from .env
   const [useAI, setUseAI] = useState(false);
   const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [useAIQuestions, setUseAIQuestions] = useState(false);
   
   // Modals - FIXED: Proper state management
   const [showCustomQuestionModal, setShowCustomQuestionModal] = useState(false);
@@ -110,13 +111,22 @@ const LoveBot = () => {
     // Check for environment variable first
     const envApiKey = process.env.REACT_APP_GEMINI_API_KEY;
     
+    console.log('🔍 Environment check:', {
+      hasEnvApiKey: !!envApiKey,
+      envApiKeyLength: envApiKey?.length,
+      nodeEnv: process.env.NODE_ENV
+    });
+    
     if (envApiKey) {
       setGeminiApiKey(envApiKey);
       setUseAI(true);
+      setUseAIQuestions(true); // Enable AI questions by default if API key exists
       console.log('✅ Gemini API key loaded from environment variable');
+      console.log('🤖 AI features enabled');
     } else {
       console.log('⚠️ No Gemini API key found in environment variables');
       console.log('Add REACT_APP_GEMINI_API_KEY to your .env file for AI features');
+      console.log('🔍 Available env vars:', Object.keys(process.env).filter(key => key.startsWith('REACT_APP_')));
     }
 
     // Check for shared challenge
@@ -184,7 +194,101 @@ const LoveBot = () => {
     return { title: "Room to Grow", emoji: "🌱", color: "text-purple-500" };
   };
 
-  const getRandomQuestion = () => {
+  const generateAIQuestion = async (previousAnswers = []) => {
+    console.log('🤖 AI Question Generation Check:', {
+      hasGeminiApiKey: !!geminiApiKey,
+      useAIQuestions,
+      geminiApiKeyLength: geminiApiKey?.length
+    });
+    
+    if (!geminiApiKey || !useAIQuestions) {
+      console.log('❌ AI question generation skipped - missing requirements');
+      return null;
+    }
+    
+    console.log('🚀 Generating AI question...');
+    
+    try {
+      // Create context from previous answers to make questions more personalized
+      const context = previousAnswers.length > 0 
+        ? `Based on these previous answers: ${previousAnswers.slice(-2).map(a => `"${a.answer}"`).join(', ')}`
+        : '';
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `You are LoveBot, creating fun relationship questions for couples. Generate 1 single, fun question that helps partners learn about each other.
+
+${context}
+
+Requirements:
+- ONE simple question only (not compound questions)
+- Fun and engaging, not too serious
+- Easy to answer in a few words or sentences
+- About preferences, habits, memories, or light personality traits
+- Format: "What's your..." or "How do you..." or "What..."
+- NO relationship advice, just a simple question
+
+Examples of good questions:
+- "What's your weirdest food combination that you actually love?"
+- "What song makes you instantly happy?"
+- "What's your go-to dance move when nobody's watching?"
+
+Generate ONE fun question:`
+            }]
+          }]
+        })
+      });
+
+      console.log('🌐 Gemini API response status:', response.status);
+
+      if (!response.ok) {
+        throw new Error(`Gemini API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        let question = data.candidates[0].content.parts[0].text.trim();
+        // Clean up the response - remove quotes and extra text
+        question = question.replace(/^["']|["']$/g, '');
+        question = question.split('\n')[0]; // Take only first line
+        
+        // Ensure it ends with a question mark
+        if (!question.endsWith('?')) {
+          question += '?';
+        }
+        
+        console.log('✅ AI question generated:', question);
+        return question;
+      }
+    } catch (error) {
+      console.error('❌ AI Question Generation Error:', error);
+    }
+    return null;
+  };
+
+  const formatQuestion = (question, isPartnerChallenge = false) => {
+    if (isPartnerChallenge) {
+      // Partner answering about themselves - keep as "your"
+      return question;
+    } else {
+      // Original player guessing about partner - convert "your" to "your partner's"
+      return question
+        .replace(/What's your /g, "What's your partner's ")
+        .replace(/What time do you /g, "What time does your partner ")
+        .replace(/What song always gets you /g, "What song always gets your partner ")
+        .replace(/What superpower would you /g, "What superpower would your partner ")
+        .replace(/How do you /g, "How does your partner ")
+        .replace(/What's something small your partner does that makes you happy/g, "What's something small you do that makes your partner happy");
+    }
+  };
+
+  const getRandomQuestion = async () => {
     if (partnerQuestions.length > 0) {
       const availablePartnerQuestions = partnerQuestions.filter(q => !usedQuestions.includes(q.question));
       
@@ -209,6 +313,36 @@ const LoveBot = () => {
       return formattedQuestion;
     }
 
+    // Decide between pre-written and AI questions (50/50 split when AI is enabled)
+    const shouldUseAI = useAIQuestions && geminiApiKey && Math.random() < 0.5;
+    
+    console.log('🎲 Question selection:', {
+      useAIQuestions,
+      hasGeminiApiKey: !!geminiApiKey,
+      shouldUseAI,
+      randomValue: Math.random()
+    });
+    
+    if (shouldUseAI) {
+      console.log('🤖 Attempting to generate AI question...');
+      // Try to generate an AI question
+      const aiQuestion = await generateAIQuestion(sessionData);
+      if (aiQuestion) {
+        console.log('✅ Using AI question:', aiQuestion);
+        setCurrentCategory('ai_generated');
+        const formattedQuestion = formatQuestion(aiQuestion, false); // Original game
+        setCurrentQuestion(formattedQuestion);
+        setUsedQuestions(prev => [...prev, formattedQuestion]);
+        return formattedQuestion;
+      } else {
+        console.log('⚠️ AI question generation failed, falling back to pre-written');
+      }
+      // If AI fails, fall back to pre-written questions
+    } else {
+      console.log('📝 Using pre-written question');
+    }
+
+    // Use pre-written questions (original logic)
     const allQuestions = [];
     Object.keys(questionCategories).forEach(categoryKey => {
       questionCategories[categoryKey].questions.forEach(questionBase => {
@@ -294,7 +428,7 @@ Give a short, playful, supportive response:`
     return null;
   };
 
-  const startGame = () => {
+  const startGame = async () => {
     setGameState('playing');
     setCurrentQuestionIndex(0);
     setScore(0);
@@ -302,7 +436,7 @@ Give a short, playful, supportive response:`
     setSessionData([]);
     setUsedQuestions([]);
     
-    const firstQuestion = getRandomQuestion();
+    const firstQuestion = await getRandomQuestion();
     setCurrentQuestion(firstQuestion);
   };
 
@@ -351,31 +485,12 @@ Give a short, playful, supportive response:`
         setGameState('victory');
       }, 2500);
     } else {
-      setTimeout(() => {
+      setTimeout(async () => {
         setShowAiResponse(false);
         setCurrentQuestionIndex(prev => prev + 1);
-        const nextQuestion = getRandomQuestion();
+        const nextQuestion = await getRandomQuestion();
         setCurrentQuestion(nextQuestion);
       }, 2500);
-    }
-  };
-
-  const formatQuestion = (question, isPartnerChallenge = false) => {
-    if (isPartnerChallenge) {
-      // Partner answering about themselves - keep as "your"
-      return question;
-    } else {
-      // Original player guessing about partner - convert "your" to "your partner's"
-      return question
-        .replace(/What's your /g, "What's your partner's ")
-        .replace(/What's a /g, "What's a ")
-        .replace(/What type of /g, "What type of ")
-        .replace(/What side of /g, "What side of ")
-        .replace(/What time do you /g, "What time does your partner ")
-        .replace(/What song always gets you /g, "What song always gets your partner ")
-        .replace(/What superpower would you /g, "What superpower would your partner ")
-        .replace(/How do you /g, "How does your partner ")
-        .replace(/What's something small your partner does that makes you happy/g, "What's something small you do that makes your partner happy");
     }
   };
 
