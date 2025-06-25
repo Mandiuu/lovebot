@@ -17,11 +17,12 @@ const LoveBot = () => {
   const [partnerQuestions, setPartnerQuestions] = useState([]);
   const [customQuestions, setCustomQuestions] = useState([]);
   
-  // Settings - simplified since API key comes from .env
+  // Settings - AI configuration
   const [useAI, setUseAI] = useState(false);
   const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   
-  // Modals - FIXED: Proper state management
+  // Modal states
   const [showCustomQuestionModal, setShowCustomQuestionModal] = useState(false);
   const [newCustomQuestion, setNewCustomQuestion] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
@@ -69,67 +70,17 @@ const LoveBot = () => {
       name: "Daily Life & Habits",
       color: "from-blue-400 to-teal-400",
       questions: [
-  "What's your morning routine like?",
-  "What side of the bed do you sleep on?",
-  "What's your favorite room in your home?",
-  "What's your biggest guilty pleasure?",
-  "How do you like your coffee or tea?",
-  "What's your go-to outfit for feeling confident?",
-  "What time do you naturally wake up?",
-  "What's your favorite app on your phone?",
-  "What's your shopping weakness?",
-  "What's your ideal temperature for the house?",
-  "What's the weirdest food combination you secretly love?",
-  "If you could have any superpower for just one day, what would you do?",
-  "What song do you sing in the shower when nobody's listening?",
-  "What's your most embarrassing autocorrect fail?",
-  "If you had to eat one meal for the rest of your life, what would it be?",
-  "What's the strangest thing you believed as a child?",
-  "Which celebrity would you want to be stuck in an elevator with?",
-  "What's your go-to dance move when you think nobody's watching?",
-  "If you could master any skill instantly, what would it be?",
-  "What's the most random thing in your search history right now?",
-  "What's a tradition from your childhood you want to keep?",
-  "What's something you've changed your mind about completely?",
-  "What's your most prized possession and why?",
-  "What's a compliment you received that you'll never forget?",
-  "What's your biggest 'what if' in life?",
-  "What's something you're secretly proud of but rarely talk about?",
-  "What's the best advice you've ever received?",
-  "What's a fear you had as a kid that seems silly now?",
-  "What's something you wish you could tell your teenage self?",
-  "What's your favorite way to spend a rainy day?",
-  "If money wasn't a factor, what would your dream vacation look like?",
-  "What's on your bucket list that might surprise me?",
-  "If you could live anywhere in the world for a year, where would it be?",
-  "What's a skill you've always wanted to learn but haven't yet?",
-  "If you could have dinner with anyone, dead or alive, who would it be?",
-  "What's your dream job that has nothing to do with your current career?",
-  "If you could change one thing about the world, what would it be?",
-  "What's something you want to accomplish in the next five years?",
-  "If you won the lottery tomorrow, what's the first thing you'd do?",
-  "What's a cause you're passionate about?",
-  "What's your love language and how did you discover it?",
-  "What's the most romantic gesture someone could do for you?",
-  "What's your idea of the perfect date night at home?",
-  "What's something I do that makes you feel most loved?",
-  "What's a relationship milestone you're looking forward to?",
-  "What's your favorite memory of us together so far?",
-  "How do you prefer to resolve conflicts in relationships?",
-  "What's something you've learned about love from your parents?",
-  "What's your favorite way to show affection?",
-  "What does 'home' mean to you?",
-  "If we could time travel together, what era would you want to visit?",
-  "If we had to survive a zombie apocalypse, what would your strategy be?",
-  "If you could switch lives with me for a day, what would you do?",
-  "If we were contestants on a reality show, which one would we win?",
-  "If you could read my mind for one hour, would you want to?",
-  "If we had to live off-grid for a month, what would you miss most?",
-  "If you could give our relationship a theme song, what would it be?",
-  "If we were characters in a movie, what genre would our story be?",
-  "If you could plan the perfect surprise for me, what would it involve?",
-  "If we could have any animal as a pet (real or mythical), what would you choose?"
-]
+        "What's your morning routine like?",
+        "What side of the bed do you sleep on?",
+        "What's your favorite room in your home?",
+        "What's your biggest guilty pleasure?",
+        "How do you like your coffee or tea?",
+        "What's your go-to outfit for feeling confident?",
+        "What time do you naturally wake up?",
+        "What's your favorite app on your phone?",
+        "What's your shopping weakness?",
+        "What's your ideal temperature for the house?"
+      ]
     },
     fun_preferences: {
       icon: Users,
@@ -154,19 +105,40 @@ const LoveBot = () => {
 
   useEffect(() => {
     // Load saved custom questions
-    const savedCustomQuestions = JSON.parse(localStorage.getItem('lovebot_custom_questions') || '[]');
-    setCustomQuestions(savedCustomQuestions);
+    try {
+      const savedCustomQuestions = JSON.parse(localStorage.getItem('lovebot_custom_questions') || '[]');
+      setCustomQuestions(savedCustomQuestions);
+    } catch (error) {
+      console.error('Error loading custom questions:', error);
+      setCustomQuestions([]);
+    }
 
     // Check for environment variable first
     const envApiKey = process.env.REACT_APP_GEMINI_API_KEY;
     
-    if (envApiKey) {
+    console.log('🔍 Checking for API key...');
+    console.log('Environment variable exists:', !!envApiKey);
+    console.log('API key length:', envApiKey?.length || 0);
+    
+    if (envApiKey && envApiKey.length > 10) {
       setGeminiApiKey(envApiKey);
       setUseAI(true);
       console.log('✅ Gemini API key loaded from environment variable');
     } else {
-      console.log('⚠️ No Gemini API key found in environment variables');
-      console.log('Add REACT_APP_GEMINI_API_KEY to your .env file for AI features');
+      console.log('⚠️ No valid Gemini API key found in environment variables');
+      console.log('Make sure your .env file contains: REACT_APP_GEMINI_API_KEY=your_key_here');
+      
+      // Fallback to localStorage
+      try {
+        const savedApiKey = localStorage.getItem('lovebot_gemini_api_key');
+        if (savedApiKey && savedApiKey.length > 10) {
+          setGeminiApiKey(savedApiKey);
+          setUseAI(true);
+          console.log('✅ Gemini API key loaded from localStorage');
+        }
+      } catch (error) {
+        console.error('Error loading API key from localStorage:', error);
+      }
     }
 
     // Check for shared challenge
@@ -236,10 +208,8 @@ const LoveBot = () => {
 
   const formatQuestion = (question, isPartnerChallenge = false) => {
     if (isPartnerChallenge) {
-      // Partner answering about themselves - keep as "your"
       return question;
     } else {
-      // Original player guessing about partner - convert "your" to "your partner's"
       return question
         .replace(/What's your /g, "What's your partner's ")
         .replace(/What time do you /g, "What time does your partner ")
@@ -258,7 +228,7 @@ const LoveBot = () => {
         setUsedQuestions([]);
         const selected = partnerQuestions[0];
         setCurrentCategory(selected.category);
-        const formattedQuestion = formatQuestion(selected.question, true); // Partner challenge
+        const formattedQuestion = formatQuestion(selected.question, true);
         setCurrentQuestion(formattedQuestion);
         setUsedQuestions([formattedQuestion]);
         return formattedQuestion;
@@ -268,14 +238,14 @@ const LoveBot = () => {
       const selected = availablePartnerQuestions[randomIndex];
       
       setCurrentCategory(selected.category);
-      const formattedQuestion = formatQuestion(selected.question, true); // Partner challenge
+      const formattedQuestion = formatQuestion(selected.question, true);
       setCurrentQuestion(formattedQuestion);
       setUsedQuestions(prev => [...prev, formattedQuestion]);
       
       return formattedQuestion;
     }
 
-    // Use pre-written questions (original logic)
+    // Use pre-written questions
     const allQuestions = [];
     Object.keys(questionCategories).forEach(categoryKey => {
       questionCategories[categoryKey].questions.forEach(questionBase => {
@@ -302,7 +272,7 @@ const LoveBot = () => {
       const randomIndex = Math.floor(Math.random() * allQuestions.length);
       const selected = allQuestions[randomIndex];
       setCurrentCategory(selected.category);
-      const formattedQuestion = formatQuestion(selected.question, false); // Original game
+      const formattedQuestion = formatQuestion(selected.question, false);
       setCurrentQuestion(formattedQuestion);
       setUsedQuestions([formattedQuestion]);
       return formattedQuestion;
@@ -312,7 +282,7 @@ const LoveBot = () => {
     const selected = availableQuestions[randomIndex];
     
     setCurrentCategory(selected.category);
-    const formattedQuestion = formatQuestion(selected.question, false); // Original game
+    const formattedQuestion = formatQuestion(selected.question, false);
     setCurrentQuestion(formattedQuestion);
     setUsedQuestions(prev => [...prev, formattedQuestion]);
     
@@ -434,15 +404,50 @@ Give a short, playful, supportive response:`
     }
   };
 
-  // FIXED: Real AI comparison function
+  const saveApiKey = (apiKey) => {
+    if (apiKey.trim()) {
+      try {
+        localStorage.setItem('lovebot_gemini_api_key', apiKey.trim());
+        setGeminiApiKey(apiKey.trim());
+        setUseAI(true);
+        console.log('✅ API key saved successfully');
+        return true;
+      } catch (error) {
+        console.error('Error saving API key:', error);
+        return false;
+      }
+    }
+    return false;
+  };
+
+  const removeApiKey = () => {
+    try {
+      localStorage.removeItem('lovebot_gemini_api_key');
+      setGeminiApiKey('');
+      setUseAI(false);
+      console.log('API key removed');
+    } catch (error) {
+      console.error('Error removing API key:', error);
+    }
+  };
+
   const compareAnswersWithAI = async () => {
-    console.log('=== AI Comparison Debug ===');
-    console.log('AI Comparison Check:', { useAI, hasApiKey: !!geminiApiKey, apiKeyLength: geminiApiKey?.length });
-    console.log('Session Data:', sessionData);
-    console.log('Partner Questions:', partnerQuestions);
+    console.log('🔍 Starting AI comparison...');
     
-    const originalAnswers = JSON.parse(sessionStorage.getItem('originalAnswers') || '[]');
-    console.log('Original Answers from sessionStorage:', originalAnswers);
+    const originalAnswers = (() => {
+      try {
+        const stored = sessionStorage.getItem('originalAnswers');
+        console.log('📦 Raw stored answers:', stored);
+        return JSON.parse(stored || '[]');
+      } catch (error) {
+        console.error('❌ Error parsing original answers:', error);
+        return [];
+      }
+    })();
+    
+    console.log('📊 Session data:', sessionData);
+    console.log('📊 Original answers:', originalAnswers);
+    console.log('🔧 AI Status:', { useAI, hasApiKey: !!geminiApiKey, keyLength: geminiApiKey?.length });
     
     if (!useAI || !geminiApiKey) {
       alert(`🤖 AI comparison requires Gemini API to be configured. 
@@ -450,23 +455,27 @@ Give a short, playful, supportive response:`
 Current status:
 - AI Enabled: ${useAI ? 'Yes' : 'No'}
 - API Key: ${geminiApiKey ? 'Provided' : 'Missing'}
+- Key Length: ${geminiApiKey?.length || 0}
 
-Please add REACT_APP_GEMINI_API_KEY to your .env file to enable AI features.`);
+Please check your .env file or add your API key in Settings.`);
       return;
     }
 
     if (originalAnswers.length === 0) {
-      console.log('No original answers found in sessionStorage');
+      console.log('❌ No original answers found');
       alert('❌ No original answers found for comparison. This feature only works when responding to a partner challenge.');
       return;
     }
 
-    console.log('Starting AI comparison with valid data...');
     setIsTyping(true);
     
     try {
-      const comparisons = sessionData.map((myAnswer, index) => {
+      const comparisons = sessionData.map((myAnswer) => {
         const originalAnswer = originalAnswers.find(orig => orig.question === myAnswer.question);
+        console.log(`🔍 Matching question: "${myAnswer.question}"`);
+        console.log(`   - Original: "${originalAnswer?.answer || 'No match'}"`);
+        console.log(`   - Current: "${myAnswer.answer}"`);
+        
         return {
           question: myAnswer.question,
           partner1Answer: originalAnswer?.answer || 'No answer',
@@ -475,7 +484,7 @@ Please add REACT_APP_GEMINI_API_KEY to your .env file to enable AI features.`);
         };
       });
 
-      console.log('Comparisons prepared:', comparisons);
+      console.log('📋 Final comparisons:', comparisons);
 
       const prompt = `You are LoveBot, analyzing how well a couple knows each other. Compare these relationship quiz answers and rate similarity accurately.
 
@@ -493,70 +502,90 @@ Analyze each answer pair for similarity:
 - Different but reasonable = 30-59% match
 - Completely different/unclear = 0-29% match
 
-Give a compatibility score out of 10 based on actual answer similarity (not just being positive). Include:
-- Overall compatibility score (be honest!)
+Give a compatibility score out of 10 based on actual answer similarity (be honest!). Include:
+- Overall compatibility score
 - 2-3 specific observations about how well Partner 1 knows Partner 2
 - 1 suggestion for improving their connection
 
 Keep it under 100 words, fun but accurate!`;
 
-      console.log('Sending prompt to Gemini API:', prompt);
+      console.log('📝 Sending prompt to Gemini API...');
+      console.log('🔗 API URL:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey.substring(0, 10)}...`);
+
+      const requestBody = {
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }]
+      };
+      
+      console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
-        })
+        body: JSON.stringify(requestBody)
       });
 
-      console.log('Gemini API response status:', response.status);
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
-        console.error('Gemini API error response:', response);
-        throw new Error(`Gemini API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ API Error Response:', errorText);
+        throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
-      console.log('Gemini API response data:', data);
+      console.log('📋 Full API response:', JSON.stringify(data, null, 2));
       
       if (data.candidates && data.candidates[0] && data.candidates[0].content) {
         const analysis = data.candidates[0].content.parts[0].text;
-        console.log('AI Analysis received:', analysis);
+        console.log('✅ AI Analysis received:', analysis);
         
         setComparisonResults({
           analysis,
           comparisons
         });
-        console.log('Setting comparison results and opening modal...');
         setShowComparisonModal(true);
-        console.log('Comparison modal should now be open');
       } else {
-        console.error('Invalid response structure from AI:', data);
-        throw new Error('Invalid response from AI');
+        console.error('❌ Invalid response structure:', data);
+        
+        // Check for safety ratings or other issues
+        if (data.candidates && data.candidates[0]) {
+          const candidate = data.candidates[0];
+          if (candidate.finishReason) {
+            console.log('🛡️ Finish reason:', candidate.finishReason);
+            if (candidate.finishReason === 'SAFETY') {
+              alert('❌ The AI detected safety concerns with the content. Try with different answers or shorter responses.');
+              return;
+            }
+          }
+          if (candidate.safetyRatings) {
+            console.log('🛡️ Safety ratings:', candidate.safetyRatings);
+          }
+        }
+        
+        throw new Error('Invalid response from AI - check console for details');
       }
     } catch (error) {
-      console.error('AI Comparison Error:', error);
+      console.error('❌ AI Comparison Error:', error);
       if (error.message?.includes('401') || error.message?.includes('403')) {
         alert('❌ Invalid Gemini API key. Please check your API key in settings.');
+      } else if (error.message?.includes('429')) {
+        alert('❌ Too many requests. Please wait a moment and try again.');
+      } else if (error.message?.includes('503')) {
+        alert('❌ Gemini service is temporarily unavailable. Please try again in a few minutes.');
       } else {
-        alert('❌ Sorry, I had trouble analyzing your answers. Please try again or check your API settings.');
+        alert(`❌ AI Error: ${error.message}\n\nCheck browser console for more details.`);
       }
     } finally {
-      console.log('Setting isTyping to false...');
+      console.log('🏁 AI comparison finished');
       setIsTyping(false);
     }
-  };
-
-  const saveApiSettings = () => {
-    // No longer needed since API key comes from .env
-    console.log('API key loaded from environment variable');
   };
 
   const generateShortChallengeLink = (sessionData) => {
@@ -588,22 +617,6 @@ Love you! 😘`;
     window.location.href = mailtoLink;
   };
 
-  const shareViaText = (challengeLink) => {
-    const message = `💕 Hey! I made a love quiz for you! Think you know me well? Take my challenge: ${challengeLink} 🎮💖`;
-    
-    // Try to detect if it's mobile for SMS, otherwise copy to clipboard
-    if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-      window.location.href = `sms:?body=${encodeURIComponent(message)}`;
-    } else {
-      copyToClipboard(message);
-    }
-  };
-
-  const shareViaSocial = (challengeLink) => {
-    const message = `💕 I created a fun relationship quiz! Think you know me well? Take my love challenge and let's see! 🎮✨ ${challengeLink}`;
-    copyToClipboard(message);
-  };
-
   const copyToClipboard = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -613,20 +626,43 @@ Love you! 😘`;
     }
   };
 
-  // FIXED: Save custom questions to localStorage
   const saveCustomQuestion = () => {
     if (newCustomQuestion.trim()) {
       const updatedQuestions = [...customQuestions, newCustomQuestion.trim()];
       setCustomQuestions(updatedQuestions);
-      localStorage.setItem('lovebot_custom_questions', JSON.stringify(updatedQuestions));
+      try {
+        localStorage.setItem('lovebot_custom_questions', JSON.stringify(updatedQuestions));
+      } catch (error) {
+        console.error('Error saving custom questions:', error);
+      }
       setNewCustomQuestion('');
+      setShowCustomQuestionModal(false);
     }
   };
 
   const deleteCustomQuestion = (index) => {
     const updatedQuestions = customQuestions.filter((_, i) => i !== index);
     setCustomQuestions(updatedQuestions);
-    localStorage.setItem('lovebot_custom_questions', JSON.stringify(updatedQuestions));
+    try {
+      localStorage.setItem('lovebot_custom_questions', JSON.stringify(updatedQuestions));
+    } catch (error) {
+      console.error('Error saving custom questions:', error);
+    }
+  };
+
+  const resetGame = () => {
+    setGameState('menu');
+    setCurrentQuestionIndex(0);
+    setScore(0);
+    setLevel(1);
+    setSessionData([]);
+    setUsedQuestions([]);
+    setShowAiResponse(false);
+    setPartnerQuestions([]);
+    setComparisonResults(null);
+    setInputText('');
+    setCurrentQuestion('');
+    setCurrentCategory('');
   };
 
   // MAIN GAME RENDER
@@ -671,7 +707,15 @@ Love you! 😘`;
                 className="w-full bg-white/20 hover:bg-white/30 px-4 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all"
               >
                 <Star className="w-4 h-4" />
-                Custom Questions
+                Custom Questions ({customQuestions.length})
+              </button>
+
+              <button
+                onClick={() => setShowSettingsModal(true)}
+                className="w-full bg-white/20 hover:bg-white/30 px-4 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all"
+              >
+                <Settings className="w-4 h-4" />
+                {geminiApiKey ? '🤖 AI Enabled' : 'Setup AI Features'}
               </button>
             </div>
 
@@ -702,7 +746,7 @@ Love you! 😘`;
         {/* Custom Questions Modal */}
         {showCustomQuestionModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden">
               <div className="flex items-center justify-between p-4 border-b">
                 <h3 className="text-lg font-semibold">✏️ Custom Questions</h3>
                 <button onClick={() => setShowCustomQuestionModal(false)} className="p-1 hover:bg-gray-100 rounded">
@@ -710,7 +754,7 @@ Love you! 😘`;
                 </button>
               </div>
               
-              <div className="p-6">
+              <div className="p-6 max-h-[70vh] overflow-y-auto">
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Add Custom Question
@@ -737,10 +781,10 @@ Love you! 😘`;
                     <div className="max-h-40 overflow-y-auto space-y-2">
                       {customQuestions.map((q, index) => (
                         <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <span className="text-sm flex-1">{q}</span>
+                          <span className="text-sm flex-1 pr-2">{q}</span>
                           <button
                             onClick={() => deleteCustomQuestion(index)}
-                            className="ml-2 text-red-500 hover:text-red-700"
+                            className="ml-2 text-red-500 hover:text-red-700 flex-shrink-0"
                           >
                             🗑️
                           </button>
@@ -754,56 +798,78 @@ Love you! 😘`;
           </div>
         )}
 
-        {/* Challenge Share Modal */}
-        {showChallengeShareModal && (
+        {/* Settings Modal */}
+        {showSettingsModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-md w-full">
               <div className="flex items-center justify-between p-4 border-b">
-                <h3 className="text-lg font-semibold">💕 Share Your Challenge</h3>
-                <button onClick={() => setShowChallengeShareModal(false)} className="p-1 hover:bg-gray-100 rounded">
+                <h3 className="text-lg font-semibold">⚙️ AI Settings</h3>
+                <button onClick={() => setShowSettingsModal(false)} className="p-1 hover:bg-gray-100 rounded">
                   <X className="w-5 h-5" />
                 </button>
               </div>
               
               <div className="p-6">
-                <p className="text-gray-600 mb-6 text-center">
-                  Choose how you'd like to share your love challenge with your partner!
-                </p>
-                
-                <div className="space-y-3">
-                  <button
-                    onClick={() => {
-                      shareViaEmail(generateShortChallengeLink(sessionData));
-                      setShowChallengeShareModal(false);
-                    }}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition-colors"
-                  >
-                    <span className="text-lg">📧</span>
-                    <div className="text-left">
-                      <div className="font-medium">Send via Email</div>
-                      <div className="text-xs opacity-90">Opens your email app with a cute message</div>
-                    </div>
-                  </button>
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className={`w-3 h-3 rounded-full ${useAI && geminiApiKey ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <span className="font-medium">
+                      AI Status: {useAI && geminiApiKey ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </div>
                   
-                  <button
-                    onClick={() => {
-                      copyToClipboard(generateShortChallengeLink(sessionData));
-                      setShowChallengeShareModal(false);
-                    }}
-                    className="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition-colors"
-                  >
-                    <Copy className="w-4 h-4" />
-                    <div className="text-left">
-                      <div className="font-medium">Copy Link Only</div>
-                      <div className="text-xs opacity-90">Just the challenge link</div>
+                  {geminiApiKey ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <p className="text-sm text-green-800 mb-2">
+                        ✅ API Key Configured
+                      </p>
+                      <p className="text-xs text-green-600">
+                        Key: ••••••••{geminiApiKey.slice(-4)}
+                      </p>
+                      <button
+                        onClick={removeApiKey}
+                        className="mt-2 text-xs text-red-600 hover:text-red-800 underline"
+                      >
+                        Remove API Key
+                      </button>
                     </div>
-                  </button>
+                  ) : (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <p className="text-sm text-yellow-800 mb-2">
+                        ⚠️ No API Key Found
+                      </p>
+                      <p className="text-xs text-yellow-700 mb-3">
+                        Add REACT_APP_GEMINI_API_KEY to your .env file, or enter it manually below:
+                      </p>
+                      
+                      <div className="space-y-2">
+                        <input
+                          type="password"
+                          placeholder="Paste your Gemini API key here..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                          onPaste={(e) => {
+                            const apiKey = e.clipboardData.getData('text');
+                            if (apiKey && saveApiKey(apiKey)) {
+                              alert('✅ API key saved!');
+                              setShowSettingsModal(false);
+                            }
+                          }}
+                        />
+                        <p className="text-xs text-gray-500">
+                          Get your free API key at: https://makersuite.google.com/app/apikey
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
-                <div className="mt-6 p-3 bg-pink-50 rounded-lg">
-                  <p className="text-xs text-pink-700 text-center">
-                    💡 Your partner will answer the same questions you did, then you can compare results!
-                  </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <h4 className="font-medium text-blue-800 mb-2">🤖 AI Features</h4>
+                  <ul className="text-xs text-blue-700 space-y-1">
+                    <li>• Playful responses to your answers</li>
+                    <li>• Smart answer comparison with your partner</li>
+                    <li>• Relationship compatibility analysis</li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -815,7 +881,7 @@ Love you! 😘`;
 
   if (gameState === 'playing') {
     const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
-    const categoryInfo = questionCategories[currentCategory] || { color: "from-purple-400 to-pink-400", name: "Custom Question" };
+    const categoryInfo = questionCategories[currentCategory] || { color: "from-purple-400 to-pink-400", name: "Custom Question", icon: Star };
     
     return (
       <div>
@@ -860,7 +926,7 @@ Love you! 😘`;
               <div className="bg-white rounded-3xl p-8">
                 <div className="text-center mb-6">
                   <div className={`bg-gradient-to-r ${categoryInfo.color} rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4`}>
-                    {React.createElement(categoryInfo.icon || Star, { className: "w-8 h-8 text-white" })}
+                    {React.createElement(categoryInfo.icon, { className: "w-8 h-8 text-white" })}
                   </div>
                   <h3 className="text-2xl font-bold text-gray-800 leading-tight">
                     {currentQuestion}
@@ -925,7 +991,7 @@ Love you! 😘`;
           </div>
         </div>
 
-        {/* Challenge Share Modal for playing state */}
+        {/* Challenge Share Modal */}
         {showChallengeShareModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-md w-full">
@@ -1032,7 +1098,7 @@ Love you! 😘`;
               {/* AI Comparison Button */}
               {sessionData.length > 0 && partnerQuestions.length > 0 && (
                 <button
-                  onClick={() => compareAnswersWithAI()}
+                  onClick={compareAnswersWithAI}
                   disabled={isTyping}
                   className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 disabled:opacity-50 px-6 py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all transform hover:scale-105 shadow-lg"
                 >
@@ -1051,17 +1117,7 @@ Love you! 😘`;
               
               {/* Play Again */}
               <button
-                onClick={() => {
-                  setGameState('menu');
-                  setCurrentQuestionIndex(0);
-                  setScore(0);
-                  setLevel(1);
-                  setSessionData([]);
-                  setUsedQuestions([]);
-                  setShowAiResponse(false);
-                  setPartnerQuestions([]);
-                  setComparisonResults(null);
-                }}
+                onClick={resetGame}
                 className="w-full bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 px-6 py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all transform hover:scale-105 shadow-lg"
               >
                 <Play className="w-5 h-5" />
@@ -1085,11 +1141,10 @@ Love you! 😘`;
           </div>
         </div>
 
-        {/* Victory screen modals */}
+        {/* AI Comparison Modal */}
         {showComparisonModal && comparisonResults && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" 
-            style={{ zIndex: 99999 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setShowComparisonModal(false);
@@ -1173,6 +1228,7 @@ Love you! 😘`;
           </div>
         )}
 
+        {/* Detailed Results Modal */}
         {showShareModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
@@ -1221,6 +1277,7 @@ Love you! 😘`;
           </div>
         )}
 
+        {/* Challenge Share Modal */}
         {showChallengeShareModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-md w-full">
