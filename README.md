@@ -2,8 +2,6 @@
 
 > A fun, AI-powered relationship game that helps couples discover how well they really know each other
 
-![LoveBot Screenshot](https://via.placeholder.com/800x400/ec4899/ffffff?text=💕+LoveBot+Quiz+Game)
-
 ## 🌟 What LoveBot Does
 
 LoveBot is an interactive relationship quiz game that creates fun challenges between couples. It's not your typical chatbot - it's a **game-based bot** that asks relationship questions, analyzes your answers with AI, and lets you challenge your partner to see how well they know you!
