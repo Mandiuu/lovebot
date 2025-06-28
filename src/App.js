@@ -139,8 +139,71 @@ const LoveBot = () => {
     const sharedQuestions = urlParams.get('questions');
     const originalAnswers = urlParams.get('answers');
     const compactChallenge = urlParams.get('c');
+    const ultraCompactChallenge = urlParams.get('d');
     
-    if (compactChallenge) {
+    if (ultraCompactChallenge) {
+      try {
+        // Decode ultra compact format
+        const decoded = atob(ultraCompactChallenge + '==='); // Add padding
+        const items = decoded.split('|');
+        
+        const questions = [];
+        const answers = [];
+        
+        items.forEach(item => {
+          if (!item) return;
+          
+          // Extract category (first 3 chars)
+          const categoryPrefix = item.substring(0, 3);
+          
+          // Find matching category
+          const categoryKey = Object.keys(questionCategories).find(key => 
+            key.startsWith(categoryPrefix)
+          );
+          
+          if (!categoryKey) return;
+          
+          // Extract question index (next chars until we hit base64)
+          let questionIndex = '';
+          let i = 3;
+          while (i < item.length && !isNaN(parseInt(item[i], 36))) {
+            questionIndex += item[i];
+            i++;
+          }
+          
+          const qIndex = parseInt(questionIndex, 36);
+          const question = questionCategories[categoryKey]?.questions[qIndex];
+          
+          if (!question) return;
+          
+          // Rest is the compressed answer
+          const compressedAnswer = item.substring(i);
+          let answer = '';
+          try {
+            answer = atob(compressedAnswer + '===');
+          } catch (e) {
+            answer = compressedAnswer; // fallback
+          }
+          
+          questions.push({
+            question: question,
+            category: categoryKey
+          });
+          
+          answers.push({
+            question: question,
+            answer: answer,
+            category: categoryKey
+          });
+        });
+        
+        setPartnerQuestions(questions);
+        setOriginalAnswers(answers);
+      } catch (error) {
+        console.error('Error parsing ultra compact challenge:', error);
+        // Fallback to regular compact format
+      }
+    } else if (compactChallenge) {
       try {
         const challengeData = JSON.parse(atob(compactChallenge));
         const questions = challengeData.q.map(item => ({
@@ -634,16 +697,49 @@ Keep it under 100 words, fun but accurate!`;
 
   // Update the generateShortChallengeLink function
   const generateShortChallengeLink = (sessionData) => {
-    const challengeData = {
-      q: sessionData.map(item => ({
-        t: item.question, // This should now be the original question
-        c: item.category,
-        a: item.answer
-      }))
-    };
+    console.log('📝 Generating ultra-compact link for:', sessionData);
     
-    const encodedData = btoa(JSON.stringify(challengeData));
-    return `${window.location.origin}${window.location.pathname}?c=${encodedData}`;
+    // Create a more compact representation
+    const compactData = sessionData.map(item => {
+      // Use first 3 chars of category
+      const categoryPrefix = item.category.substring(0, 3);
+      
+      // Find question index within its category
+      const categoryQuestions = questionCategories[item.category]?.questions || [];
+      const questionIndex = categoryQuestions.indexOf(item.question);
+      
+      console.log(`🔍 Item: ${item.question}`);
+      console.log(`📂 Category: ${item.category} -> ${categoryPrefix}`);
+      console.log(`📋 Question index: ${questionIndex}`);
+      
+      return [
+        categoryPrefix,
+        questionIndex,
+        // Compress answer by taking first 30 chars (shorter for even more compression)
+        item.answer.substring(0, 30)
+      ];
+    });
+    
+    console.log('📦 Compact data:', compactData);
+    
+    // Convert to even more compact format
+    const ultraCompact = compactData.map(([cat, idx, ans]) => {
+      if (idx === -1) {
+        // If question not found in predefined categories, use custom encoding
+        return `cus${btoa(ans.substring(0, 20)).replace(/[=+/]/g, '')}`;
+      }
+      return `${cat}${idx.toString(36)}${btoa(ans).replace(/[=+/]/g, '')}`;
+    }).join('|');
+    
+    console.log('🗜️ Ultra compact string:', ultraCompact);
+    
+    const encodedData = btoa(ultraCompact).replace(/[=+/]/g, '');
+    const finalUrl = `${window.location.origin}${window.location.pathname}?d=${encodedData}`;
+    
+    console.log('🔗 Final URL length:', finalUrl.length);
+    console.log('🔗 Final URL:', finalUrl);
+    
+    return finalUrl;
   };
 
   const shareViaEmail = (challengeLink) => {
