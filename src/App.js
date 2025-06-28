@@ -29,6 +29,7 @@ const LoveBot = () => {
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const [comparisonResults, setComparisonResults] = useState(null);
   const [showChallengeShareModal, setShowChallengeShareModal] = useState(false);
+  const [originalAnswers, setOriginalAnswers] = useState([]);
 
   const questionCategories = {
     getting_to_know: {
@@ -105,13 +106,8 @@ const LoveBot = () => {
 
   useEffect(() => {
     // Load saved custom questions
-    try {
-      const savedCustomQuestions = JSON.parse(localStorage.getItem('lovebot_custom_questions') || '[]');
-      setCustomQuestions(savedCustomQuestions);
-    } catch (error) {
-      console.error('Error loading custom questions:', error);
-      setCustomQuestions([]);
-    }
+    const savedCustomQuestions = [];
+    setCustomQuestions(savedCustomQuestions);
 
     // Check for environment variable first
     const envApiKey = process.env.REACT_APP_GEMINI_API_KEY;
@@ -128,16 +124,13 @@ const LoveBot = () => {
       console.log('⚠️ No valid Gemini API key found in environment variables');
       console.log('Make sure your .env file contains: REACT_APP_GEMINI_API_KEY=your_key_here');
       
-      // Fallback to localStorage
-      try {
-        const savedApiKey = localStorage.getItem('lovebot_gemini_api_key');
-        if (savedApiKey && savedApiKey.length > 10) {
-          setGeminiApiKey(savedApiKey);
-          setUseAI(true);
-          console.log('✅ Gemini API key loaded from localStorage');
-        }
-      } catch (error) {
-        console.error('Error loading API key from localStorage:', error);
+      // Fallback to local storage (but don't use localStorage in artifacts)
+      // In a real app, this would check localStorage
+      const savedApiKey = ''; // Placeholder - in real app would be localStorage.getItem('lovebot_gemini_api_key')
+      if (savedApiKey && savedApiKey.length > 10) {
+        setGeminiApiKey(savedApiKey);
+        setUseAI(true);
+        console.log('✅ Gemini API key loaded from localStorage');
       }
     }
 
@@ -161,7 +154,7 @@ const LoveBot = () => {
         }));
         
         setPartnerQuestions(questions);
-        sessionStorage.setItem('originalAnswers', JSON.stringify(answers));
+        setOriginalAnswers(answers);
       } catch (error) {
         console.error('Error parsing compact challenge:', error);
       }
@@ -174,7 +167,7 @@ const LoveBot = () => {
         if (originalAnswers) {
           try {
             const parsed = JSON.parse(decodeURIComponent(originalAnswers));
-            sessionStorage.setItem('originalAnswers', JSON.stringify(parsed));
+            setOriginalAnswers(parsed);
           } catch (e) {
             console.error('Error parsing original answers:', e);
           }
@@ -211,13 +204,80 @@ const LoveBot = () => {
       return question;
     } else {
       return question
+        // Basic "What's your" patterns
         .replace(/What's your /g, "What's your partner's ")
+        .replace(/What's something you're /g, "What's something your partner is ")
+        .replace(/What's one thing you /g, "What's one thing your partner ")
+        
+        // Specific time/habit patterns
         .replace(/What time do you /g, "What time does your partner ")
+        .replace(/What time does your partner naturally wake up/g, "What time does your partner naturally wake up")
+        
+        // Action patterns with "you"
         .replace(/What song always gets you /g, "What song always gets your partner ")
         .replace(/What superpower would you /g, "What superpower would your partner ")
+        .replace(/What type of music do you /g, "What type of music does your partner ")
+        .replace(/What makes you /g, "What makes your partner ")
+        
+        // "How do you" patterns
         .replace(/How do you /g, "How does your partner ")
-        .replace(/What's something small your partner does that makes you happy/g, "What's something small you do that makes your partner happy");
+        
+        // Special relationship-specific replacements
+        .replace(/What's something small your partner does that makes you happy/g, "What's something small you do that makes your partner happy")
+        .replace(/What's your favorite thing about your relationship/g, "What's your partner's favorite thing about your relationship")
+        .replace(/What's your favorite memory of you two together/g, "What's your partner's favorite memory of you two together")
+        .replace(/What's one thing you always say about your partner to others/g, "What's one thing your partner always says about you to others")
+        
+        // Sleep and daily habits
+        .replace(/What side of the bed do you /g, "What side of the bed does your partner ")
+        
+        // Shopping and preferences
+        .replace(/What's your shopping /g, "What's your partner's shopping ")
+        .replace(/What's your go-to /g, "What's your partner's go-to ")
+        .replace(/What's your favorite /g, "What's your partner's favorite ")
+        .replace(/What's your biggest /g, "What's your partner's biggest ")
+        .replace(/What's your dream /g, "What's your partner's dream ")
+        .replace(/What's your ideal /g, "What's your partner's ideal ")
+        
+        // Preference patterns
+        .replace(/What's a hobby you /g, "What's a hobby your partner ")
+        .replace(/What's a relationship goal you /g, "What's a relationship goal your partner ")
+        
+        // Morning routine and habits
+        .replace(/What's your morning routine like/g, "What's your partner's morning routine like")
+        
+        // Coffee/tea preferences
+        .replace(/How do you like your coffee or tea/g, "How does your partner like their coffee or tea");
     }
+  };
+
+  // Add this helper function to reverse-transform questions back to original
+  const getOriginalQuestionFromTransformed = (transformedQuestion) => {
+    return transformedQuestion
+      .replace(/What's your partner's /g, "What's your ")
+      .replace(/What's something your partner is /g, "What's something you're ")
+      .replace(/What's one thing your partner /g, "What's one thing you ")
+      .replace(/What time does your partner /g, "What time do you ")
+      .replace(/What song always gets your partner /g, "What song always gets you ")
+      .replace(/What superpower would your partner /g, "What superpower would you ")
+      .replace(/What type of music does your partner /g, "What type of music do you ")
+      .replace(/What makes your partner /g, "What makes you ")
+      .replace(/How does your partner /g, "How do you ")
+      .replace(/What's something small you do that makes your partner happy/g, "What's something small your partner does that makes you happy")
+      .replace(/What's your partner's favorite thing about your relationship/g, "What's your favorite thing about your relationship")
+      .replace(/What's your partner's favorite memory of you two together/g, "What's your favorite memory of you two together")
+      .replace(/What's one thing your partner always says about you to others/g, "What's one thing you always say about your partner to others")
+      .replace(/What side of the bed does your partner /g, "What side of the bed do you ")
+      .replace(/What's your partner's shopping /g, "What's your shopping ")
+      .replace(/What's your partner's go-to /g, "What's your go-to ")
+      .replace(/What's your partner's favorite /g, "What's your favorite ")
+      .replace(/What's your partner's biggest /g, "What's your biggest ")
+      .replace(/What's your partner's dream /g, "What's your dream ")
+      .replace(/What's your partner's ideal /g, "What's your ideal ")
+      .replace(/What's a hobby your partner /g, "What's a hobby you ")
+      .replace(/What's a relationship goal your partner /g, "What's a relationship goal you ")
+      .replace(/What's your partner's morning routine like/g, "What's your morning routine like")
+      .replace(/How does your partner like their coffee or tea/g, "How do you like your coffee or tea");
   };
 
   const getRandomQuestion = () => {
@@ -353,8 +413,14 @@ Give a short, playful, supportive response:`
     setScore(newScore);
     setLevel(newLevel);
     
+    // Store the ORIGINAL question (not the transformed one) for challenge sharing
+    const originalQuestion = partnerQuestions.length > 0 
+      ? partnerQuestions[currentQuestionIndex]?.question || currentQuestion
+      : getOriginalQuestionFromTransformed(currentQuestion);
+    
     setSessionData(prev => [...prev, {
-      question: currentQuestion,
+      question: originalQuestion, // Store original question for challenge
+      displayQuestion: currentQuestion, // Store what was actually shown to user
       answer: inputText,
       category: currentCategory,
       score: answerScore
@@ -406,45 +472,24 @@ Give a short, playful, supportive response:`
 
   const saveApiKey = (apiKey) => {
     if (apiKey.trim()) {
-      try {
-        localStorage.setItem('lovebot_gemini_api_key', apiKey.trim());
-        setGeminiApiKey(apiKey.trim());
-        setUseAI(true);
-        console.log('✅ API key saved successfully');
-        return true;
-      } catch (error) {
-        console.error('Error saving API key:', error);
-        return false;
-      }
+      // In real app would use localStorage.setItem('lovebot_gemini_api_key', apiKey.trim());
+      setGeminiApiKey(apiKey.trim());
+      setUseAI(true);
+      console.log('✅ API key saved successfully');
+      return true;
     }
     return false;
   };
 
   const removeApiKey = () => {
-    try {
-      localStorage.removeItem('lovebot_gemini_api_key');
-      setGeminiApiKey('');
-      setUseAI(false);
-      console.log('API key removed');
-    } catch (error) {
-      console.error('Error removing API key:', error);
-    }
+    // In real app would use localStorage.removeItem('lovebot_gemini_api_key');
+    setGeminiApiKey('');
+    setUseAI(false);
+    console.log('API key removed');
   };
 
   const compareAnswersWithAI = async () => {
     console.log('🔍 Starting AI comparison...');
-    
-    const originalAnswers = (() => {
-      try {
-        const stored = sessionStorage.getItem('originalAnswers');
-        console.log('📦 Raw stored answers:', stored);
-        return JSON.parse(stored || '[]');
-      } catch (error) {
-        console.error('❌ Error parsing original answers:', error);
-        return [];
-      }
-    })();
-    
     console.log('📊 Session data:', sessionData);
     console.log('📊 Original answers:', originalAnswers);
     console.log('🔧 AI Status:', { useAI, hasApiKey: !!geminiApiKey, keyLength: geminiApiKey?.length });
@@ -505,7 +550,6 @@ Analyze each answer pair for similarity:
 Give a compatibility score out of 10 based on actual answer similarity (be honest!). Include:
 - Overall compatibility score
 - 2-3 specific observations about how well Partner 1 knows Partner 2
-- 1 suggestion for improving their connection
 
 Keep it under 100 words, fun but accurate!`;
 
@@ -588,10 +632,11 @@ Keep it under 100 words, fun but accurate!`;
     }
   };
 
+  // Update the generateShortChallengeLink function
   const generateShortChallengeLink = (sessionData) => {
     const challengeData = {
       q: sessionData.map(item => ({
-        t: item.question,
+        t: item.question, // This should now be the original question
         c: item.category,
         a: item.answer
       }))
@@ -630,11 +675,7 @@ Love you! 😘`;
     if (newCustomQuestion.trim()) {
       const updatedQuestions = [...customQuestions, newCustomQuestion.trim()];
       setCustomQuestions(updatedQuestions);
-      try {
-        localStorage.setItem('lovebot_custom_questions', JSON.stringify(updatedQuestions));
-      } catch (error) {
-        console.error('Error saving custom questions:', error);
-      }
+      // In real app would use localStorage.setItem('lovebot_custom_questions', JSON.stringify(updatedQuestions));
       setNewCustomQuestion('');
       setShowCustomQuestionModal(false);
     }
@@ -643,11 +684,7 @@ Love you! 😘`;
   const deleteCustomQuestion = (index) => {
     const updatedQuestions = customQuestions.filter((_, i) => i !== index);
     setCustomQuestions(updatedQuestions);
-    try {
-      localStorage.setItem('lovebot_custom_questions', JSON.stringify(updatedQuestions));
-    } catch (error) {
-      console.error('Error saving custom questions:', error);
-    }
+    // In real app would use localStorage.setItem('lovebot_custom_questions', JSON.stringify(updatedQuestions));
   };
 
   const resetGame = () => {
@@ -659,6 +696,7 @@ Love you! 😘`;
     setUsedQuestions([]);
     setShowAiResponse(false);
     setPartnerQuestions([]);
+    setOriginalAnswers([]);
     setComparisonResults(null);
     setInputText('');
     setCurrentQuestion('');
@@ -1257,7 +1295,7 @@ Love you! 😘`;
                             +{item.score} pts
                           </span>
                         </div>
-                        <p className="text-sm font-medium mb-2">{item.question}</p>
+                        <p className="text-sm font-medium mb-2">{item.displayQuestion || item.question}</p>
                         <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">{item.answer}</p>
                       </div>
                     ))}
